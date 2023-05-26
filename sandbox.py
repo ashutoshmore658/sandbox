@@ -31,7 +31,6 @@ parser.add_argument("-t", "--timeout", dest="timeout", help="timeout in seconds,
 parser.add_argument("-i", "--internet", action="store_true", dest="internet", help = "connects to internet",  default=False)
 parser.add_argument("-k", "--lkm", action="store_true", dest="lkm", help="load kernel module",  default=False)
 parser.add_argument("-C", "--ufctrace", action="store_true", dest="ufstrace", help="unfiltered call trace(full trace)", default=False)
-parser.add_argument("-e", "--femonitor", action="store_true", dest="femonitor", help="filtered system event monitoring", default=False)
 parser.add_argument("-E", "--ufemonitor", action="store_true", dest="ufemonitor", help="unfiltered system event monitoring", default=False)
 parser.add_argument("-m", "--memfor", action="store_true", dest="memfor", help="memory forensics", default=False)
 parser.add_argument("-M", "--vmemfor", action="store_true", dest="ver_memfor", help="verbose memory forensics(slow)", default=False)
@@ -44,7 +43,7 @@ print("\n")
 timeout = args.timeout
 internet = args.internet
 is_full_strace = args.ufstrace
-is_femonitor = args.femonitor
+is_femonitor = False
 is_ufemonitor = args.ufemonitor
 is_ver_memfor = args.ver_memfor
 is_lkm = args.lkm
