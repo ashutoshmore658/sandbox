@@ -45,15 +45,16 @@ class Static:
         else:
             print("No such file or directory : ",self.file)
             sys.exit()
-    def ssdeep(self):
+    def ssdeep(self,master_ssdeep_file):
         o=subprocess.run(['ssdeep',self.file],stdout=subprocess.PIPE,check=True)
         std_output=o.stdout
         std_output=std_output.decode()
         fuzzy_hash=(std_output.split("\n")[1])
         code=o.returncode
+        o=subprocess.run(['ssdeep','-b',self.file,'>',master_ssdeep_file],stdout=subprocess.PIPE,check=True)
         return [fuzzy_hash,code]
     def ssdeep_match(self, collected_fuzzyHashes):
-        o=subprocess.run(['ssdeep','-m',collected_fuzzyHashes,self.file],stdout=subprocess.PIPE,check=True)
+        o=subprocess.run(['ssdeep','-bm',collected_fuzzyHashes,self.file],stdout=subprocess.PIPE,check=True)
         return (o.stdout).decode()
     def yaraRules(self, rulesfile):
         rules = yara.compile(rulesfile)
