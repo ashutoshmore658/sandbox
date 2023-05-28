@@ -128,7 +128,7 @@ logs.write(f"finding md5sum done returned with errorcode: {md5sum[1]}")
 logs.write("\n")
 
 logs.write("finding fuzzy hash results..!!")
-fhash = static.ssdeep()
+fhash = static.ssdeep(master_ssdeep_file)
 fuzzy_hash = (fhash[0]).split(",")[0]
 print("ssdeep: ",fuzzy_hash)
 f.write(f"ssdeep: {fuzzy_hash}")
