@@ -14,6 +14,7 @@ from VirtualBox import*
 from configuration import*
 from memory_analysis import*
 from file_operations import*
+from json_parser_network_traffic import*
 import argparse
 import shutil
 import time
@@ -644,6 +645,8 @@ logs.write("suspended vm")
 logs.write("\n")
 print("VM suspended !")
 
+print("getting network traffic in human readable format..\n\n")
+
 logs.write("Getting network activities in human redable format")
 logs.write("\n")
 net_activities = dynamic_analysis_report_dir + "/network_traffic_analysis.txt"
@@ -655,8 +658,10 @@ f.write("===============================DNS SUMMARY=============================
 f.write("\n\t")
 logs.write("Getting DNS summary..!!")
 logs.write("\n")
+json_net = jsonParserNetwork()
+network_dict = {}
 dns_summary = net.dnsSummaryReport()
-# print dns_summary
+network_dict["DNS Summary"] = json_net.parseDnsTraffic(dns_summary)
 f.write(str(dns_summary))
 f.write("\n\n")
 logs.write(f"Got the DNS summary dumped into {net_activities}")
@@ -667,6 +672,9 @@ f.write("===============================TCP CONVERSATIONS=======================
 f.write("\n\t")
 # f.write("=======================================\n\n")
 tcp_conversations = net.tcpConversationReport()
+network_dict["TCP Summary"] = json_net.parseTcpTraffic(tcp_conversations)
+analysis_dict["Network Traffic"] = network_dict
+print("Got network traffic in json format...\n\n")
 # print tcp_conversations
 f.write(str(tcp_conversations))
 f.write("\n\n")
