@@ -13,11 +13,13 @@ from static_analysis import*
 from VirtualBox import*
 from configuration import*
 from memory_analysis import*
+from file_operations import*
 import argparse
 import shutil
 import time
 import os
 from tqdm import tqdm
+import json
 
 
 # checking if filename and arguments are provided
@@ -29,7 +31,8 @@ if len(sys.argv) <= 1:
 parser = argparse.ArgumentParser(description='Usage: %prog [Options] <file> [args]')
 parser.add_argument("file",help="path to the malware file")
 parser.add_argument("-t", "--timeout", dest="timeout", help="timeout in seconds, default is 60 seconds", default="60", type = int)
-parser.add_argument("-i", "--internet", action="store_true", dest="internet", help = "connects to internet",  default=False)
+parser.add_argument("-f", "--fileops", action="store_true", dest="fileops", help="get file operations in json format", default=False)
+#parser.add_argument("-i", "--internet", action="store_true", dest="internet", help = "connects to internet",  default=False)
 parser.add_argument("-k", "--lkm", action="store_true", dest="lkm", help="load kernel module",  default=False)
 parser.add_argument("-C", "--ufctrace", action="store_true", dest="ufstrace", help="unfiltered call trace(full trace)", default=False)
 parser.add_argument("-E", "--ufemonitor", action="store_true", dest="ufemonitor", help="unfiltered system event monitoring", default=False)
@@ -42,14 +45,19 @@ print(args)
 print("\n")
 
 timeout = args.timeout
-internet = args.internet
+#internet = args.internet
 is_full_strace = args.ufstrace
 is_femonitor = False
+print_hexdump = args.phexdump
 is_ufemonitor = args.ufemonitor
+is_fileops = args.fileops
+if is_fileops == True:
+    print_hexdump = False
+    is_ufemonitor = False
 is_ver_memfor = args.ver_memfor
 is_lkm = args.lkm
 is_memfor = args.memfor
-print_hexdump = args.phexdump
+
 
 
 file_path = args.file
@@ -76,6 +84,9 @@ desk_screenshot_path = new_report_dir + "/desktop.png"
 dynamic_analysis_report_dir=new_report_dir + "/dynamic_analysis"
 os.mkdir(dynamic_analysis_report_dir)
 pcap_output_path = dynamic_analysis_report_dir + "/output.pcap"
+json_report_dir = new_report_dir + "/" + "Complete Analysis in Json"
+os.mkdir(json_report_dir)
+json_report = json_report_dir + "/" + "Analysis_report.json"
 
 #creating memory dumps directory if not created
 if not os.path.isdir(mem_dump_dir) and (is_memfor or is_ver_memfor):
@@ -93,6 +104,9 @@ if not os.path.exists(master_ssdeep_file):
     mssdeepf = open(master_ssdeep_file, "w")
     mssdeepf.write("ssdeep,1.1--blocksize:hash:hash,filename\n")
     mssdeepf.close()
+
+
+analysis_dict = {}    
 
 f = open(static_analysis_report, 'w')
 logs = open(sandbox_logs, 'w')
@@ -1017,224 +1031,32 @@ if is_memfor or is_ver_memfor:
     logs.write("got all tty devices")
     logs.write("\n")
     print("got tty devices..!!\n")
-    
-    logs.write("Done!!!")
-    logs.close()
-    print("Done with analysis please visit sandbox_reports directory for results...!!\n")
+    print("\n\n")
+    print("Done with memory analysis please visit sandbox_reports directory for results...!!\n")
     
     
-#     # starting memory forensics
-#     print "Starting Memory Analysis using Volatility"
-#     vol = Volatility(py_path, vol_path, analysis_vm.get_vmmem(), mem_image_profile)
-
-#     f.write("PSLIST\n")
-#     f.write("=======================================\n\n")
-#     pslist = vol.pslist()
-#     print pslist
-#     f.write(pslist)
-#     f.write("\n")
-
-#     f.write("PSTREE\n")
-#     f.write("=======================================\n\n")
-#     pstree = vol.pstree()
-#     print pstree
-#     f.write(pstree)
-#     f.write("\n")
-
-#     f.write("Pid Hash Table\n")
-#     f.write("=======================================\n\n")
-#     pidhashtable = vol.pidhashtable()
-#     print pidhashtable
-#     f.write(pidhashtable)
-#     f.write("\n")
-
-#     f.write("PROCESS COMMAND LINE ARGUMENTS\n")
-#     f.write("=======================================\n\n")
-#     psaux = vol.psaux()
-#     print psaux
-#     f.write(psaux)
-#     f.write("\n")
-
-#     f.write("PSXVIEW\n")
-#     f.write("=======================================\n\n")
-#     psxview = vol.psxview()
-#     print psxview
-#     f.write(psxview)
-#     f.write("\n")
-
-#     f.write("PROCESS ENVIRONMENT\n")
-#     f.write("=======================================\n\n")
-#     psenv = vol.psenv()
-#     print psenv
-#     f.write(psenv)
-#     f.write("\n")
-
-#     f.write("THREADS\n")
-#     f.write("=======================================\n\n")
-#     threads = vol.threads()
-#     print threads
-#     f.write(threads)
-#     f.write("\n")
-
-#     f.write("NETWORK CONNECTIONS\n")
-#     f.write("=======================================\n\n")
-#     connections = vol.netstat()
-#     print connections
-#     f.write(connections)
-#     f.write("\n")
-
-#     f.write("INTERFACE INFORMATION\n")
-#     f.write("=======================================\n\n")
-#     ifconfig = vol.ifconfig()
-#     print ifconfig
-#     f.write(ifconfig)
-#     f.write("\n")
-
-#     f.write("PROCESSES WITH RAW SOCKETS\n")
-#     f.write("=======================================\n\n")
-#     raw_sockets = vol.list_raw()
-#     print raw_sockets
-#     f.write(raw_sockets)
-#     f.write("\n")
-
-#     f.write("LIBRARY LIST\n")
-#     f.write("========================================\n\n")
-#     lib_list = vol.library_list()
-#     print lib_list
-#     f.write(lib_list)
-#     f.write("\n")
-
-
-#     f.write("Ldrmodules\n")
-#     f.write("========================================\n\n")
-#     ldrmodules = vol.ldrmodules()
-#     print ldrmodules
-#     f.write(ldrmodules)
-#     f.write("\n")
-
-#     f.write("KERNEL MODULES\n")
-#     f.write("=========================================\n\n")
-#     modules = vol.lsmod()
-#     print modules
-#     f.write(modules)
-#     f.write("\n")
-
-#     f.write("MODULES HIDDEN FROM MODULE LIST (PRESENT IN SYSFS)\n")
-#     f.write("=========================================\n\n")
-#     chk_modules = vol.check_modules()
-#     print chk_modules
-#     f.write(chk_modules)
-#     f.write("\n")
-
-#     f.write("MODULES HIDDEN FROM MODULE LIST and SYSFS\n")
-#     f.write("=========================================\n\n")
-#     hidden_modules = vol.hidden_modules()
-#     print hidden_modules
-#     f.write(hidden_modules)
-#     f.write("\n")
+if is_fileops:
+    print("starting file operations monitor..!!\n\n")
+    logs.write("starting file operations monitor..")
+    logs.write("\n")
+    scap_file = dynamic_analysis_report_dir + "/" + "sample_strace_out.txt"
+    fops = FileOperations(scap_file)
+    file_operations_dict = fops.jsonParser()
+    analysis_dict["File Operations"] = file_operations_dict
+    logs.write("file operations done..!!\n")
+    print("file operations done..look in to json file....!!\n\n")
     
-#     f.write("FILES OPENED WITHIN KERNEL\n")
-#     f.write("=========================================\n\n")
-#     krnl_opened_files = vol.kernel_opened_files()
-#     print krnl_opened_files
-#     f.write(krnl_opened_files)
-#     f.write("\n")
-
-#     f.write("PROCESSES SHARING CREDENTIAL STRUCTURES\n")
-#     f.write("=========================================\n\n")
-#     proc_creds = vol.check_creds()
-#     print proc_creds
-#     f.write(proc_creds)
-#     f.write("\n")
-
-#     f.write("KEYBOARD NOTIFIERS\n")
-#     f.write("=========================================\n\n")
-#     key_notfs = vol.keyboard_notifiers()
-#     print key_notfs
-#     f.write(key_notfs)
-#     f.write("\n")
     
-#     f.write("TTY HOOKS\n")
-#     f.write("=========================================\n\n")
-#     tty_hooks = vol.check_tty()
-#     print tty_hooks
-#     f.write(tty_hooks)
-#     f.write("\n")
-
-#     f.write("SYSTEM CALL TABLE MODIFICATION\n")
-#     f.write("=========================================\n\n")
-#     chk_syscall = vol.check_syscall()
-#     print chk_syscall
-#     f.write(chk_syscall)
-#     f.write("\n")
-
-#     f.write("BASH HISTORY\n")
-#     f.write("=========================================\n\n")
-#     bash_hist = vol.bash_history()
-#     print bash_hist
-#     f.write(bash_hist)
-#     f.write("\n")
-
-#     f.write("MODIFIED FILE OPERATION STRUCTURES\n")
-#     f.write("=========================================\n\n")
-#     mod_fop = vol.check_fop()
-#     print mod_fop
-#     f.write(mod_fop)
-#     f.write("\n")
-
-#     f.write("HOOKED NETWORK OPERTATION FUNCTION POINTERS\n")
-#     f.write("=========================================\n\n")
-#     hooked_af = vol.check_afinfo()
-#     print hooked_af
-#     f.write(hooked_af)
-#     f.write("\n")
-
-#     f.write("NETFILTER HOOKS\n")
-#     f.write("=========================================\n\n")
-#     netfilter_hooks = vol.netfilter()
-#     print netfilter_hooks
-#     f.write(netfilter_hooks)
-#     f.write("\n")
-
-
-#     f.write("MALFIND\n")
-#     f.write("=========================================\n\n")
-#     malfind = vol.malfind()
-#     print malfind
-#     f.write(malfind)
-#     f.write("\n")
+with open(json_report, "w") as file:
+    json.dump(analysis_dict,file)
     
-#     if is_ver_memfor:
-        
-#         f.write("PLT HOOK\n")
-#         f.write("=========================================\n\n")
-#         plthooks = vol.plthook()
-#         print plthooks
-#         f.write(plthooks)
-#         f.write("\n")
-
-#         f.write("USERLAND API HOOKS\n")
-#         f.write("=========================================\n\n")
-#         apihooks = vol.apihooks()
-#         print apihooks
-#         f.write(apihooks)
-#         f.write("\n")
-        
-#         f.write("INLINE KERNEL HOOKS\n")
-#         f.write("=========================================\n\n")
-#         in_kernel_hooks = vol.check_inline_kernel()
-#         print in_kernel_hooks
-#         f.write(in_kernel_hooks)
-#         f.write("\n")
-
-
-# f.close()
-
-# print "Final report is stored in %s" % new_report_dir
-
-
-# In[ ]:
-
+logs.write("Done with total analysis..!!")
+logs.close()
+    
+    
+   
+    
+    
 
 
 
