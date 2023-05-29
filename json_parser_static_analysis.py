@@ -138,7 +138,10 @@ class JsonParserStatic:
                     if line.strip() == "":
                         continue
                     segments = line.split()
-                    segment_mapping.append(segments)
+                    segments_dict = {}
+                    segments_dict["segment"] = segments[0]
+                    segments_dict["sections"] = segments[1:]
+                    segment_mapping.append(segments_dict)
 
                 elf_data["Section to Segment mapping"] = segment_mapping
         return elf_data
