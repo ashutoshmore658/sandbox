@@ -6,11 +6,11 @@
 
 import os
 import sys
-from elftools.elf.elffile import ELFFile
-from elftools.elf.sections import SymbolTableSection
-from elftools.elf.descriptions import describe_sh_flags, describe_p_flags, describe_symbol_type, describe_e_type, describe_e_version_numeric, describe_e_machine, describe_ei_osabi, describe_ei_version, describe_ei_data, describe_ei_class
-from elftools.elf.dynamic import DynamicSection
-from io import BytesIO, open
+# from elftools.elf.elffile import ELFFile
+# from elftools.elf.sections import SymbolTableSection
+# from elftools.elf.descriptions import describe_sh_flags, describe_p_flags, describe_symbol_type, describe_e_type, describe_e_version_numeric, describe_e_machine, describe_ei_osabi, describe_ei_version, describe_ei_data, describe_ei_class
+# from elftools.elf.dynamic import DynamicSection
+# from io import BytesIO, open
 import re
 import json
 
@@ -37,7 +37,7 @@ class JsonParserStatic:
         file_size_dict = {}
         file_size_dict["file_size"] = size
         return file_size_dict
-    def parseMd5sum(self,md5_hash):
+    def parseMd5Sum(self,md5_hash):
         file_hash_dict = {}
         file_hash_dict["file_md5_hash"] = md5_hash
         return file_hash_dict
@@ -51,46 +51,46 @@ class JsonParserStatic:
         return file_fuzzy_hash_matching_dict
     def parseStrings(self, ascii_strings, unicode_strings):
         file_strings_dict = {}
-        file_strings_dict["Strings"] = {}
-        file_strings_dict["Strings"]["ascii_strings"] = ascii_strings.split("\n")
+        #file_strings_dict["Strings"] = {}
+        file_strings_dict["ascii_strings"] = ascii_strings.split("\n")
         unc_strings = unicode_strings.split("\n")
         if len(unc_strings) == 0:
-            file_strings_dict["Strings"]["unicode_strings"] = "None"
-        file_strings_dict["Strings"]["unicode_strings"] = unc_strings
+            file_strings_dict["unicode_strings"] = "None"
+        file_strings_dict["unicode_strings"] = unc_strings
         return file_strings_dict
     def parseYara(self, yara_packers, yara_capabilities):
         file_yara_dict = {}
-        file_yara_dict["yara_matching"] = {}
+        #file_yara_dict["yara_matching"] = {}
         if yara_packers == "[]":
             yara_packers = "None"
         if yara_capabilities == "[]":
             yara_capabilities = "None"
-        file_yara_dict["yara_matching"]["yara_packers"] = yara_packers
-        file_yara_dict["yara_matching"]["yara_capabilities"] = yara_capabilities
+        file_yara_dict["yara_packers"] = yara_packers
+        file_yara_dict["yara_capabilities"] = yara_capabilities
         return file_yara_dict
     def parseElfLinkedDepend(self,linkd_depnd):
         file_lnkd_depend = {}
         if linkd_depnd == "":
-            file_lnkd_depend["linked_dependencies"] = None
+            file_lnkd_depend = None
         num_dpnd = 0
         if linkd_depnd == "ELF WITH NO LINKED DEPENDENCIES":
-            file_lnkd_depend["linked_dependencies"] = "None"
+            file_lnkd_depend = "None"
         else:
-            file_lnkd_depend["linked_dependencies"] = {}
+            file_lnkd_depend = {}
             list_linkd_depnd = linkd_depnd.split("\n\t")
             list_linkd_depnd[0] = list_linkd_depnd[0][1:]
             list_linkd_depnd[len(list_linkd_depnd)-1] = list_linkd_depnd[len(list_linkd_depnd)-1][:-1]
             for dpnd in list_linkd_depnd:
                 num_dpnd = num_dpnd + 1
-                file_lnkd_depend["linked_dependencies"][num_dpnd] = {}
+                file_lnkd_depend[num_dpnd] = {}
                 list_dpnd = dpnd.split(" ")
                 if len(list_dpnd) == 2:
-                    file_lnkd_depend["linked_dependencies"][num_dpnd]["dependency_name"] = list_dpnd[0]
-                    file_lnkd_depend["linked_dependencies"][num_dpnd]["memory_address"] = list_dpnd[1][1:-1]
+                    file_lnkd_depend[num_dpnd]["dependency_name"] = list_dpnd[0]
+                    file_lnkd_depend[num_dpnd]["memory_address"] = list_dpnd[1][1:-1]
                 else:
-                    file_lnkd_depend["linked_dependencies"][num_dpnd]["dependency_name"] = list_dpnd[0]
-                    file_lnkd_depend["linked_dependencies"][num_dpnd]["dependency_path"] = list_dpnd[2]
-                    file_lnkd_depend["linked_dependencies"][num_dpnd]["memory_address"] = list_dpnd[3][1:-1]
+                    file_lnkd_depend[num_dpnd]["dependency_name"] = list_dpnd[0]
+                    file_lnkd_depend[num_dpnd]["dependency_path"] = list_dpnd[2]
+                    file_lnkd_depend[num_dpnd]["memory_address"] = list_dpnd[3][1:-1]
         return file_lnkd_depend
     def parseElfProgramHeader(self,elf_info):
         elf_data = {}
@@ -145,7 +145,7 @@ class JsonParserStatic:
     def parseElfHeader(self,header_info_string):
         elf_header = {}
         if header_info_string == "ELF with NO HEADER" or header_info_string == "":
-            elf_header["elf_header"] = None
+            elf_header = None
             return elf_header
     
         header_info = header_info_string.split("\n")
@@ -176,7 +176,7 @@ class JsonParserStatic:
         if notes == "" or notes == "ELF with NO CORE NOTES":
             result["Core Notes"] = None
             return result
-        lines = data.strip().split('\n')
+        lines = notes.strip().split('\n')
 
         line = 0
         while line < len(lines):
@@ -206,7 +206,7 @@ class JsonParserStatic:
         
         current_table = None
 
-        lines = data.strip().split("\n")
+        lines = sym_table.strip().split("\n")
         first = True
         for line in lines:
             if line.startswith("Symbol table"):

@@ -15,6 +15,7 @@ from configuration import*
 from memory_analysis import*
 from file_operations import*
 from json_parser_network_traffic import*
+from json_parser_static_analysis import*
 import argparse
 import shutil
 import time
@@ -116,16 +117,22 @@ logs.write("starting static analysis...!!")
 logs.write("\n")
 f.write( "===========================[STATIC ANALYSIS RESULTS]===========================\n\n")
 static = Static(file_path)
+
+json_static = JsonParserStatic()
+
+static_analysis_dict = {}
 #static = Static(mal_file)
 logs.write("finding filetype..!!")
 logs.write("\n")
 filetype = static.fileType()
 print("Filetype: ",filetype[0])
 print("\n")
+static_analysis_dict["File Type"] = json_static.parseFileType(filetype[0])
 f.write(f"Filetype of the malware: {filetype[0]}")
 f.write("\n")
 f.write(f"File extension is: {filetype[1]}")
 f.write("\n")
+static_analysis_dict["File Extension"] = json_static.parseFileExtension(filetype[1])
 logs.write(f"filetype finding done returned with error code: {filetype[2]}")
 logs.write("\n")
 f.write(dash_lines)
@@ -135,6 +142,7 @@ logs.write("finding file size..!!")
 logs.write("\n")
 file_size = static.fileSize()
 print(f"File Size : {file_size[0]}")
+static_analysis_dict["File Size"] = json_static.parseFileSize(file_size[0])
 f.write(f"File Size: {file_size[0]}")
 f.write("\n")
 f.write(dash_lines)
@@ -146,6 +154,7 @@ logs.write("finding md5sum..!!")
 logs.write("\n")
 md5sum = static.md5Sum()
 print("md5sum: ",md5sum[0])
+static_analysis_dict["Md5Sum"] = json_static.parseMd5Sum(md5sum[0])
 f.write(f"md5sum: {md5sum[0]}")
 f.write("\n")
 f.write(dash_lines)
@@ -158,6 +167,7 @@ fhash = static.ssdeep(master_ssdeep_file)
 fuzzy_hash = (fhash[0]).split(",")[0]
 print("ssdeep: ",fuzzy_hash)
 f.write(f"ssdeep: {fuzzy_hash}")
+static_analysis_dict["Fuzzy Hash"] = json_static.parseFuzzyHash(fuzzy_hash)
 f.write("\n")
 logs.write("finding fuzzyhash done")
 logs.write("\n")
@@ -166,7 +176,7 @@ logs.write("\n")
 ssdeep_compare = static.ssdeep_match(master_ssdeep_file)
 print("ssdeep comparison:\n")
 print(ssdeep_compare)
-# print dash_lines
+#static_analysis_dict["Fuzzy Hash Matching"] = json_static.parseFuzzyHashMatching(ssdeep_compare)
 f.write("ssdeep comparison:")
 f.write("\n")
 f.write(ssdeep_compare)
@@ -187,7 +197,7 @@ logs.write("finding ascii strings")
 logs.write("\n")
 f.write("\n")
 asc_strings = static.asciiStrings()
-# fs = open(ascii_str_file, 'w')
+
 f.write("Ascii Strings: ")
 f.write("\n")
 f.write(asc_strings[0])
@@ -195,7 +205,7 @@ f.write("\n")
 logs.write(f"finding ascii strings done returned with error code: {asc_strings[1]}")
 logs.write("\n")
 
-# fs.close()
+
 print("Strings:\n")
 print("\tAscii strings written to the static_analysis.txt file")
 
@@ -208,7 +218,7 @@ f.write(unc_strings[0])
 f.write("\n")
 f.write(dash_lines)
 f.write("\n")
-# fu.close()
+static_analysis_dict["Strings"] = json_static.parseStrings(asc_strings[0], unc_strings[0])
 print("\tUnicode strings written to static_analysis.txt file\n")
 logs.write(f"finding unicode strings done return error code {unc_strings[1]}")
 logs.write("\n")
@@ -243,6 +253,7 @@ if yara_rules or yara_packer_rules:
     logs.write("finding yara capabilities done")
     logs.write("\n")
     print("done with finding yara capabilities..stored in static_analysis.txt\n")
+static_analysis_dict["Yara Matching"] = json_static.parseYara(yara_packer, yara_capabilities)
 # print "Virustotal:\n" + "\t"
 # f.write("Virustotal:\n" + "\t")
 # f.write("\n")
@@ -275,6 +286,7 @@ if is_elf_file:
     logs.write("done with finding linked dependencies")
     logs.write("\n")
     print("Finding linked dependencies done..stored in static_analysis.txt\n")
+    static_analysis_dict["Linked Dependency"] = json_static.parseElfLinkedDepend(depends)
     
     logs.write("finding program header")
     logs.write("\n")
@@ -287,6 +299,7 @@ if is_elf_file:
     logs.write("finding progeam header done")
     logs.write("\n")
     print("Finding program header done..stored in static_analysis.txt\n")
+    static_analysis_dict["Program Header"] = json_static.parseElfProgramHeader(prog_header)
     
     logs.write("finding elf header..!!")
     logs.write("\n")
@@ -299,6 +312,8 @@ if is_elf_file:
     logs.write("finding elfheader done")
     logs.write("\n")
     print("Finding program header done..stores in static_analysis.txt\n")
+    static_analysis_dict["ELF Header"] = json_static.parseElfHeader(elfh)
+    
     
     logs.write("Finding address space section..!!")
     logs.write("\n")
@@ -323,6 +338,8 @@ if is_elf_file:
     logs.write("finding sysmbol table done")
     logs.write("\n")
     print("Finding symbol table done..stored in static_analysis.txt\n")
+    static_analysis_dict["Symbol Table"] = json_static.parseSymbolTable(sym_table)
+    
     
     logs.write("Finding relocation section..!!")
     logs.write("\n")
@@ -335,6 +352,7 @@ if is_elf_file:
     logs.write("finding relocation section done")
     logs.write("\n")
     print("Finding relocation section done..stored in static_analysis.txt\n")
+    static_analysis_dict["Relocation Section"] = json_static.parseRelocationSection(rel_section)
     
     logs.write("Finding dynamic section..!!")
     logs.write("\n")
@@ -363,6 +381,9 @@ if is_elf_file:
     logs.write("\n")
     f.write(dash_lines)
     f.write("\n")
+    static_analysis_dict["Core Notes"] = json_static.parseCoreNotes(c_notes)
+    
+analysis_dict["Static Analysis"] = static_analysis_dict
     
     
 
