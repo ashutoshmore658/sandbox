@@ -4,7 +4,7 @@
 # In[2]:
 
 
-py_path=r"/usr/bin/python"
+py_path=r"/usr/bin/python3.10"
 report_dir=r"/home/ashutoshreddy/sandbox_reports"
 dash_lines = "-" * 40
 yara_packer_rules=r"/home/ashutoshreddy/yara_rules/packer.yara"
@@ -45,4 +45,13 @@ params = []
 analysis_ip = "192.168.56.101"
 host_iface_to_sniff = "vboxnet0"
 host_tcpdumppath = "/usr/sbin/tcpdump"
+
+
+#memory variables
+
+#vm_memory_profile = r"/home/ashutoshreddy/Memory_profile/vmlinux-5.15.0-72-generic.json"
+mem_dump_dir = report_dir + "/" + "Memory_dumps"
+voltility_path = r"/home/ashutoshreddy/volatility3/vol.py"
+memory_dump_path = r"/home/ashutoshreddy/Memory_dumps/abc.vmem"
+memory_profile_dir = r"/home/ashutoshreddy/Memory_profile/"
 

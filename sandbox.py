@@ -17,6 +17,7 @@ import argparse
 import shutil
 import time
 import os
+from tqdm import tqdm
 
 
 # checking if filename and arguments are provided
@@ -75,6 +76,16 @@ desk_screenshot_path = new_report_dir + "/desktop.png"
 dynamic_analysis_report_dir=new_report_dir + "/dynamic_analysis"
 os.mkdir(dynamic_analysis_report_dir)
 pcap_output_path = dynamic_analysis_report_dir + "/output.pcap"
+
+#creating memory dumps directory if not created
+if not os.path.isdir(mem_dump_dir) and (is_memfor or is_ver_memfor):
+    os.mkdir(mem_dump_dir)
+mem_dump_path = ""
+if is_memfor or is_ver_memfor:
+    mem_dump_path = mem_dump_dir + "/" + file_name + ".vmem"
+    if os.path.exists(mem_dump_path):
+        os.remove(mem_dump_path)
+    
 
 master_ssdeep_file = report_dir + "/ssdeep_master.txt"
 # Creating the master ssdeep file
@@ -600,9 +611,24 @@ analysis_vm.takeScreenShot(desk_screenshot_path)
 logs.write("capturing desktop  screenshot of vm")
 logs.write("\n")
 
+if is_memfor or is_ver_memfor:
+    logs.write("Capturing memory Dump..!!")
+    print("capturing memory dump..\n")
+    logs.write("\n")
+    o = tqdm(analysis_vm.dumpVmMem(mem_dump_path))
+    print(o)
+    print(f"captured memory dump...stored in {mem_dump_path}\n")
+    logs.write("captured memory dump")
+    logs.write("\n")
+    
+
 logs.write("done with analysis..suspending vm..!!")
+logs.write("\n")
 print("suspending virtual machine")
 analysis_vm.suspendVm()
+logs.write("suspended vm")
+logs.write("\n")
+print("VM suspended !")
 
 logs.write("Getting network activities in human redable format")
 logs.write("\n")
@@ -657,15 +683,346 @@ logs.write(f"Got the TCP conversation report dumped into the {net_activities}")
 #     print "deleting ip port redirection entries"
 #     iptables.delete_ip_port_redirect_entries()
 #     iptables.display_ip_port_redirect_entries()
-logs.write("over...!!!")
-logs.write("\n")
-logs.write(dash_lines)
-logs.close()
 
-# if is_memfor or is_ver_memfor:
 
-#     f.write("=======================[MEMORY ANALYSIS RESULTS]=======================\n\n")
+if is_memfor or is_ver_memfor:
+    memory_analysis_report_dir = new_report_dir + "/" + "Memory Artifacts"
+    if not os.path.isdir(memory_analysis_report_dir):
+        os.mkdir(memory_analysis_report_dir)
+    
+    logs.write("Finding all attributes in memory dump using Volatility3")
+    logs.write("\n")
+    mem = Memory(py_path, voltility_path, mem_dump_path, memory_profile_dir)
+    
+    banners_report = memory_analysis_report_dir + "/" + "banners.txt"
+    bash_history_report = memory_analysis_report_dir + "/" + "bash_history.txt"
+    credential_structure_sharing_report = memory_analysis_report_dir + "/" + "credential_structure_sharing_report.txt"
+    altered_idt_report = memory_analysis_report_dir + "/" + "altered_idt.txt"
+    module_list_report = memory_analysis_report_dir + "/" + "module_list.txt"
+    syscall_table_report = memory_analysis_report_dir + "/" + "syscall_table.txt"
+    memory_mapped_elf_report = memory_analysis_report_dir + "/" + "memory_mapped_elf.txt"
+    process_env_variables_report = memory_analysis_report_dir + "/" + "process_with_environment_variables.txt"
+    keyboard_notifiers_report = memory_analysis_report_dir + "/" + "keyboard_notifiers.txt"
+    loaded_kmods_report = memory_analysis_report_dir + "/" + "loaded_kernel_modules.txt"
+    memory_maps_of_all_processes = memory_analysis_report_dir + "/" + "memory_maps_all_procs.txt"  
+    memory_maps_of_processes  = memory_analysis_report_dir + "/" + "memory_maps_procs.txt"
+    procs_with_potentially_injected_codes_report = memory_analysis_report_dir + "/" + "processes_with_potentially_injected_codes.txt"
+    procs_with_mount_space = memory_analysis_report_dir + "/" + "processes_with_mount_spaces.txt"
+    procs_with_commands = memory_analysis_report_dir + "/" + "processes_with_mother_commands.txt"
+    all_procs = memory_analysis_report_dir + "/" + "all_processes.txt"
+    procs_scans = memory_analysis_report_dir + "/" + "process_scans.txt"
+    procs_tree = memory_analysis_report_dir + "/" + "process_tree.txt"
+    procs_network_info = memory_analysis_report_dir + "/" + "process_network_information.txt"
+    tty_devices_report = memory_analysis_report_dir + "/" + "all_tty_devices.txt"
+    
 
+    #f.write("=======================[MEMORY ANALYSIS RESULTS]=======================\n\n")
+    print("\n")
+    print("\n")
+    print("Starting memory forensics using Volatility3..!!\n")
+    logs.write("getting banners..")
+    logs.write("\n")
+    print("getting bannerss....!!\n")
+    banners = mem.getBanners()
+    logs.write("got banners")
+    logs.write("\n")
+    f = open(banners_report,"w")
+    f.write("=======================[Banners]=======================\n\n\n\n\t")
+    f.write(banners[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.close()
+    print("got banners")
+    
+    logs.write("Getting bash history from memory...")
+    logs.write("\n")
+    print("getting basg history....!!\n")
+    bash_history = mem.getBashHistory()
+    logs.write("got bash history")
+    logs.write("\n")
+    f = open(bash_history_report,"w")
+    f.write("=======================[Bash History]=======================\n\n\n\n\t")
+    f.write(bash_history[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.close()
+    print("got bash history...\n")
+    
+    logs.write("Getting credential structure sharing processes")
+    logs.write("\n")
+    print("getting credential structure sharing...!!\n")
+    cred_strct = mem.getCredentialStructureSharing()
+    f = open(credential_structure_sharing_report,"w")
+    f.write("=======================[Credential Structure Sharing]=======================\n\n\n\n\t")
+    if cred_strct[1] == []:
+        f.write("no such pids available !!")
+        f.write("\n")
+    else:
+        f.write(cred_strct[0])
+        f.write("\n")
+    f.write(dash_lines)
+    f.close()
+    logs.write("got credential structure sharing pids")
+    logs.write("\n")
+    print("got credential structure sharing....\n")
+    
+    logs.write("Getting altered IDT")
+    logs.write("\n")
+    print("getting altered IDT..!!\n")
+    altered_idt = mem.getIdtAltered()
+    f = open(altered_idt_report,"w")
+    f.write("=======================[Altered IDT]=======================\n\n\n\n\t")
+    f.write(altered_idt[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.close()
+    logs.write("got altered IDT")
+    logs.write("\n")
+    print("got altered IDT...!!\n")
+    
+    logs.write("getting module lists")
+    logs.write("\n")
+    print("getting module lists...!!!\n")
+    f = open(module_list_report,"w")
+    f.write("=======================[Module List]=======================\n\n\n\n\t")
+    module_list = mem.getModuleList()
+    if module_list[1] == []:
+        f.write("No module list found")
+        f.write("\n")
+    else:
+        f.write(module_list)
+        f.write("\n")
+    f.write(dash_lines)
+    f.close()
+    logs.write("Got module list")
+    logs.write("\n")
+    print("got module list.....!!!\n")
+    
+    logs.write("getting Syscall Table")
+    logs.write("\n")
+    print("getting syscall table...!!\n")
+    syscall_table = mem.getSyscallTable()
+    logs.write("got syscall table report")
+    logs.write("\n")
+    f = open(syscall_table_report,"w")
+    f.write("=======================[Syscall Table]=======================\n\n\n\n\t")
+    f.write(syscall_table[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.close()
+    print("got syscall table..!!\n")
+    
+    logs.write("getting memory mapped elf")
+    logs.write("\n")
+    print("getting memory mapped ELF...!!!\n")
+    memory_mapped_elf = mem.getMemoryMappedElf()
+    logs.write("got memory mapped elf")
+    logs.write("\n")
+    f = open(memory_mapped_elf_report,"w")
+    f.write("=======================[Memory Mapped ELF]=======================\n\n\n\n\t")
+    f.write(memory_mapped_elf[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.close()
+    print("got memory mapped ELF...!!\n")
+    
+    logs.write("getting processes with environment variables")
+    logs.write("\n")
+    print("getting processes with environment variables...!!!\n")
+    process_with_env = mem.getProcessesWithEnvVars()
+    f = open(process_env_variables_report,"w")
+    f.write("=======================[Process With Environment Variables]=======================\n\n\n\n\t")
+    f.write(process_with_env[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.close()
+    logs.write("got process with environment variables")
+    logs.write("\n")
+    print("got processes with environment variables...!!\n")
+    
+    logs.write("getting keyboard notifiers")
+    logs.write("\n")
+    print("getting keyboard notifiers...!!\n")
+    keyboard_notifiers = mem.getKeyboardNotifiers()
+    f = open(keyboard_notifiers_report,"w")
+    f.write("=======================[KeyBoard Notifiers]=======================\n\n\n\n\t")
+    if keyboard_notifiers == []:
+        f.write("No keyboard notifiers found")
+        f.write("\n")
+    else:
+        f.write(keyboard_notifiers[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.close()
+    logs.write("got keyboard notifiers")
+    logs.write("\n")
+    print("got keyboard notifiers...!!\n")
+    
+    logs.write("getting loaded kernel modules")
+    logs.write("\n")
+    print("getting loaded kernel modules...!!\n")
+    loaded_kmods = mem.getLoadedKernelModules()
+    f = open(loaded_kmods_report, "w")
+    f.write("=======================[Loaded Kernel Modules]=======================\n\n\n\n\t")
+    f.write(loaded_kmods[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.close()
+    logs.write("got loaded kernel modules")
+    logs.write("\n")
+    print("got loaded kernel modules...!!\n")
+    
+    logs.write("get memory maps of all processes")
+    logs.write("\n")
+    print("getting memory maps of all processes...!!!\n")
+    mmaps_of_all_processes = mem.getMemoryMapsOfAllProcesses()
+    f = open(memory_maps_of_all_processes,"w")
+    f.write("=======================[Memory Maps Of All Processes]=======================\n\n\n\n\t")
+    f.write(mmaps_of_all_processes[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.close()
+    logs.write("got memory maps of all processes")
+    logs.write("\n")
+    print("got memory maps of all processes...!!\n")
+    
+    
+    logs.write("memory maps of processes")
+    logs.write("\n")
+    print("getting memory maps of processes...!!\n")
+    mmaps_of_processes = mem.getMemoryMapsOfProcesses()
+    f = open(memory_maps_of_processes,"w")
+    f.write("=======================[Memory Maps Of Processes]=======================\n\n\n\n\t")
+    f.write(mmaps_of_processes[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.close()
+    logs.write("got memory maps of processes")
+    logs.write("\n")
+    print("got memory maps of processes...!!\n")
+    
+    logs.write("processes with potentially injected codes")
+    logs.write("\n")
+    print("getting processes potentially injected codes...!!\n")
+    procs_with_potentially_injected_codes = mem.getProcessesWithPotentiallyInjectedCode()
+    f = open(procs_with_potentially_injected_codes_report,"w")
+    f.write("=======================[Processes With Potentially Injected Codes====\n\n\n\n\t")
+    f.write(procs_with_potentially_injected_codes[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.close()
+    logs.write("got processes with potentially injected codes")
+    logs.write("\n")
+    print("got processes with potentially injected codes...!!\n")
+    
+    logs.write("get processes with their mount spaces")
+    logs.write("\n")
+    print("getting processes with mount spaces...!!\n")
+    procs_with_mount_spaces = mem.getProcessesMountSpaces()
+    f = open(procs_with_mount_space,"w")
+    f.write("=======================[Processes With Mount Spaces]=======================\n\n\n\n\t")
+    f.write(str(procs_with_mount_spaces[0]))
+    f.write("\n")
+    f.write(dash_lines)
+    f.close()
+    logs.write("got processes with their mount spaces")
+    logs.write("\n")
+    print("got processes with potentially injected codes...!!\n")
+    
+    logs.write("get Processes with their mother commands")
+    logs.write("\n")
+    print("getting processes with their mother commands...!!!\n")
+    processes_with_commands = mem.getProcessesWithCommands()
+    f = open(procs_with_commands,"w")
+    f.write("=======================[Processes With Their Mother Commands]=======================\n\n\n\n\t")
+    f.write(processes_with_commands[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.close()
+    logs.write("got proceses with their mother commands")
+    logs.write("\n")
+    print("got processes with their mother commands")
+    
+    logs.write("get all processes")
+    logs.write("\n")
+    print("getting all processes...!!\n")
+    all_process  = mem.getAllProcesses()
+    f = open(all_procs,"w")
+    f.write("=======================[List of All Process]=======================\n\n\n\n\t")
+    f.write(all_process[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.write("\n")
+    f.close()
+    logs.write("got all processes")
+    logs.write("\n")
+    print("got all processes...!!\n")
+    
+    logs.write("get process scans")
+    logs.write("\n")
+    print("getting process scans..!!!\n")
+    process_scans = mem.getProcessScans()
+    f = open(procs_scans,"w")
+    f.write("=======================[Process Scans]=======================\n\n\n\n\t")
+    f.write(process_scans[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.write("\n")
+    f.close()
+    logs.write("got process scans")
+    logs.write("\n")
+    print("got processe scans...!!!\n")
+    
+    logs.write("getting process tree")
+    logs.write("\n")
+    print("getting process trees...!!!\n")
+    process_tree = mem.getProcessTree()
+    f = open(procs_tree,"w")
+    f.write("=======================[Process Tree]=======================\n\n\n\n\t")
+    f.write(process_tree[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.write("\n")
+    f.close()
+    logs.write("got process tree")
+    logs.write("\n")
+    print("got process trees...!!!\n")
+    
+    logs.write("getting process network information")
+    logs.write("\n")
+    print("getting process network information...!!!\n")
+    process_network_info = mem.getNetworkInfoOfAllProcess()
+    f = open(procs_network_info,"w")
+    f.write("=======================[Process Network Information]=======================\n\n\n\n\t")
+    f.write(process_network_info[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.write("\n")
+    f.close()
+    logs.write("got process networtk information")
+    logs.write("\n")
+    print("got process network information...!!!\n")
+    
+    logs.write("getting TTY devices")
+    logs.write("\n")
+    print("getting tty devices..!!\n")
+    tty_devices = mem.getTtyDevices()
+    f = open(tty_devices_report,"w")
+    f.write("=======================[TTY Devices]=======================\n\n\n\n\t")
+    f.write(tty_devices[0])
+    f.write("\n")
+    f.write(dash_lines)
+    f.write("\n")
+    f.close()
+    logs.write("got all tty devices")
+    logs.write("\n")
+    print("got tty devices..!!\n")
+    
+    logs.write("Done!!!")
+    logs.close()
+    print("Done with analysis please visit sandbox_reports directory for results...!!\n")
+    
+    
 #     # starting memory forensics
 #     print "Starting Memory Analysis using Volatility"
 #     vol = Volatility(py_path, vol_path, analysis_vm.get_vmmem(), mem_image_profile)
