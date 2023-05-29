@@ -176,6 +176,14 @@ class VM():
         call_trace=open(capture_out_file).read()
         return call_trace
     
+    def dumpVmMem(self,mem_image):
+        try:
+            c_proc=subprocess.Popen(['VBoxManage','debugvm',self.vm,'dumpvmcore','--filename',mem_image],stdout=subprocess.PIPE)
+            return "Done"
+        except subprocess.CalledProcessError as e:
+            return e.returncode
+        except OSError as e:
+            return e
 
 
 # In[14]:
@@ -201,11 +209,11 @@ class TCPDUMP():
             print("TCPDUMP was not spawned")
     def dnsSummaryReport(self):
         c_proc = subprocess.Popen([self.tcpdump_path, '-n', '-r', self.tcpdump_output_pcap_path, "udp and port 53"], stdout=subprocess.PIPE)
-        dns_query_summary= c_proc.communicate()
+        dns_query_summary= (c_proc.communicate()[0]).decode()
         return dns_query_summary
     def tcpConversationReport(self):
         c_proc = subprocess.Popen([self.tcpdump_path,'-n', '-q', '-r', self.tcpdump_output_pcap_path, "tcp"], stdout=subprocess.PIPE)
-        tcp_conv_summary= c_proc.communicate()
+        tcp_conv_summary= (c_proc.communicate()[0]).decode()
         return tcp_conv_summary
 
 
