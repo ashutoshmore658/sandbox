@@ -8,7 +8,9 @@ class jsonParserNetwork:
     def __init__(self):
         pass
     def parseTcpTraffic(self,tcp_data):
+        tcp_data = tcp_data.strip()
         traffic_list = tcp_data.split("\n")
+        #print(traffic_list)
         pkt_num = 0
         traffic_dict = {}
         for pkt in traffic_list:
@@ -39,8 +41,11 @@ class jsonParserNetwork:
             }
             traffic_dict[pkt_num] = pkt_dict
         return traffic_dict
+    '05:05:07.109882 IP 192.168.56.101.55872 > 8.8.8.8.53: 26625+ [1au] A? irc.xitenet.org. (44)'
     def parseDnsTraffic(self,dns_data):
+        dns_data = dns_data.strip()
         traffic_list = dns_data.split("\n")
+        #print(traffic_list)
         pkt_num = 0
         traffic_dict = {}
         for pkt in traffic_list[:-1]:
@@ -64,15 +69,29 @@ class jsonParserNetwork:
             std_query = False
             if query_id[-1] == "+":
                 std_query = True
-            query_type = (pkt_attr[1]).strip()
-            domain_name = (pkt_attr[2]).strip()
-            pkt_payload = int((pkt_attr[3][1:-1]).strip())
+            query_type = ""
+            domain_name = ""
+            pkt_payload = ""
+            QNAME = None
+            if len(pkt_attr)==4:
+                query_type = (pkt_attr[1]).strip()
+                domain_name = (pkt_attr[2]).strip()
+                pkt_payload = int((pkt_attr[3][1:-1]).strip())
+            else:
+                QNAME = (pkt_attr[1]).strip()
+                query_type = (pkt_attr[2]).strip()
+                domain_name = (pkt_attr[3]).strip()
+                pkt_payload = int((pkt_attr[4][1:-1]).strip())
+                
+                
+
             pkt_dict = {
                 "source_ip" : source_ip,
                 "source_port" : source_port,
                 "destination_ip" : destination_ip,
                 "destination_port" : destination_port,
                 "query_identification_number" : query_id,
+                "QNAME" : QNAME,
                 "query_type" : query_type,
                 "standard_query_flag" : std_query,
                 "domain_name" : domain_name,

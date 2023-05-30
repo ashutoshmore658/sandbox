@@ -191,6 +191,18 @@ class FileOperations:
                     permission = stat.filemode(int(permission, 8))
                     scap_dict[pid][syscall_name][num_chmod]["file_name"] = file_name
                     scap_dict[pid][syscall_name][num_chmod]["permission"] = permission
+                elif syscall_name == "pread64":
+                    if "file_descriptor" not in scap_dict[pid][syscall_name].keys():
+                        scap_dict[pid][syscall_name]["file_descriptor"] = []
+                    if "read_buffer_values" not in scap_dict[pid][syscall_name].keys():
+                        scap_dict[pid][syscall_name]["read_buffer_values"] = []
+                    list_syscall_attr = syscall_attr.split(",")
+                    fd = list_syscall_attr[0][1:]
+                    read_buffer_values = list_syscall_attr[1]
+                    scap_dict[pid][syscall_name]["file_descriptor"].append(fd)
+                    if read_buffer_values not in scap_dict[pid][syscall_name]["read_buffer_values"]:
+                        scap_dict[pid][syscall_name]["read_buffer_values"].append(read_buffer_values)
+                    
         temp_scap_dict = { key:(None if scap_dict[key]=={} else scap_dict[key]) for key in scap_dict}
         scap_dict = temp_scap_dict
         return scap_dict

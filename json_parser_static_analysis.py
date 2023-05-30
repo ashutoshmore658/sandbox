@@ -232,7 +232,8 @@ class JsonParserStatic:
                 entry["Ndx"] = sym_tab[5].strip()
                 if len(sym_tab) > 6:
                     entry["Name"] = sym_tab[6].strip()
-                entry["Name"] = None        
+                else:
+                    entry["Name"] = None        
 
                 current_table[parts[0].strip()] = entry
         return symbol_tables
