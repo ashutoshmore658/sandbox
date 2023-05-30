@@ -12,7 +12,7 @@ yara_rules=r"/home/ashutoshreddy/yara_rules/capabilities.yara"
 vm_id="vm"
 analysis_username="root"
 analysis_password="1234"
-analysis_clean_snapname="vm_fresh_0"
+analysis_clean_snapname="vm_fresh_1"
 analysis_mal_dir=r"/home/u/malware"
 is_elf_file=False
 

@@ -550,6 +550,17 @@ else:
     print("done with executing strace with malware sample...\n")
     logs.write("done with executing strace with sample")
     logs.write("\n")
+    
+    
+if is_memfor or is_ver_memfor:
+    logs.write("Capturing memory Dump..!!")
+    print("capturing memory dump..\n")
+    logs.write("\n")
+    o = tqdm(analysis_vm.dumpVmMem(mem_dump_path))
+    print(o)
+    print(f"captured memory dump...stored in {mem_dump_path}\n")
+    logs.write("captured memory dump")
+    logs.write("\n")
 
 
 # stopping sysdig
@@ -647,15 +658,7 @@ analysis_vm.takeScreenShot(desk_screenshot_path)
 logs.write("capturing desktop  screenshot of vm")
 logs.write("\n")
 
-if is_memfor or is_ver_memfor:
-    logs.write("Capturing memory Dump..!!")
-    print("capturing memory dump..\n")
-    logs.write("\n")
-    o = tqdm(analysis_vm.dumpVmMem(mem_dump_path))
-    print(o)
-    print(f"captured memory dump...stored in {mem_dump_path}\n")
-    logs.write("captured memory dump")
-    logs.write("\n")
+
     
 
 logs.write("done with analysis..suspending vm..!!")
@@ -682,8 +685,10 @@ logs.write("\n")
 json_net = jsonParserNetwork()
 network_dict = {}
 dns_summary = net.dnsSummaryReport()
+f.write(str(dns_summary.strip()))
+
 network_dict["DNS Summary"] = json_net.parseDnsTraffic(dns_summary)
-f.write(str(dns_summary))
+
 f.write("\n\n")
 logs.write(f"Got the DNS summary dumped into {net_activities}")
 logs.write("\n")
@@ -693,11 +698,12 @@ f.write("===============================TCP CONVERSATIONS=======================
 f.write("\n\t")
 # f.write("=======================================\n\n")
 tcp_conversations = net.tcpConversationReport()
+f.write(str(tcp_conversations))
 network_dict["TCP Summary"] = json_net.parseTcpTraffic(tcp_conversations)
 analysis_dict["Network Traffic"] = network_dict
 print("Got network traffic in json format...\n\n")
 # print tcp_conversations
-f.write(str(tcp_conversations))
+
 f.write("\n\n")
 f.write(dash_lines)
 f.close()
