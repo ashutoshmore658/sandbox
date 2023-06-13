@@ -12,11 +12,13 @@ import stat
 
 
 class FileOperations:
-    def __init__(self,scap_file):
+    def __init__(self, scap_file, only_syscall):
         self.file = scap_file
+        self.only_syscall = only_syscall
         self.file_ops = ["open","openat","openat2","rename", "renameat", "renameat2", "mkdir", "mkdirat","rmdir", "unlink", "unlinkat","remove", "access", "readdir","opendir","closedir","truncate","ftruncate","read","write","link","linkat","open_by_handle_at","creat","lseek","llseek","pread64","pwrite","fchdir","symlink","symlinkat","mount", "umount","link","linkat","chmod" ,"fchmod", "fchmodat", "close"]
     def jsonParser(self):
         scap_dict = {}
+        api_calls = {}
         file = open(self.file,"r")
         syscalls = (file.read()).split("\n")[:-2]
         num_write = 0
@@ -37,6 +39,16 @@ class FileOperations:
                 else:
                     break
             syscall_attr = (scap_attr[1])[name_len:]
+            symbol_list = ["!","@","#","$","%","*","(",")","+","-","_","=",".",">","<",",",":",";","~","`"]
+            syscall_name = syscall_name.strip()
+            if syscall_name not in api_calls.keys():
+                if syscall_name[0] not in symbol_list:
+                    api_calls[syscall_name] = 1
+            else:
+                if syscall_name[0] not in symbol_list:
+                    api_calls[syscall_name] = api_calls[syscall_name] + 1
+            if self.only_syscall:
+                continue
             if syscall_name not in self.file_ops:
                 continue
             else:
@@ -205,7 +217,7 @@ class FileOperations:
                     
         temp_scap_dict = { key:(None if scap_dict[key]=={} else scap_dict[key]) for key in scap_dict}
         scap_dict = temp_scap_dict
-        return scap_dict
+        return [scap_dict, api_calls]
     
                 
 

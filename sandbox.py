@@ -35,8 +35,8 @@ parser.add_argument("file",help="path to the malware file")
 parser.add_argument("-t", "--timeout", dest="timeout", help="timeout in seconds, default is 60 seconds", default="60", type = int)
 parser.add_argument("-f", "--fileops", action="store_true", dest="fileops", help="get file operations in json format", default=False)
 #parser.add_argument("-i", "--internet", action="store_true", dest="internet", help = "connects to internet",  default=False)
-parser.add_argument("-k", "--lkm", action="store_true", dest="lkm", help="load kernel module",  default=False)
-parser.add_argument("-C", "--ufctrace", action="store_true", dest="ufstrace", help="unfiltered call trace(full trace)", default=False)
+#parser.add_argument("-k", "--lkm", action="store_true", dest="lkm", help="load kernel module",  default=False)
+#parser.add_argument("-C", "--ufctrace", action="store_true", dest="ufstrace", help="unfiltered call trace(full trace)", default=False)
 parser.add_argument("-E", "--ufemonitor", action="store_true", dest="ufemonitor", help="unfiltered system event monitoring", default=False)
 parser.add_argument("-m", "--memfor", action="store_true", dest="memfor", help="memory forensics in txt format", default=False)
 parser.add_argument("-M", "--vmemfor", action="store_true", dest="ver_memfor", help=" memory forensics in json format", default=False)
@@ -48,7 +48,7 @@ print("\n")
 
 timeout = args.timeout
 #internet = args.internet
-is_full_strace = args.ufstrace
+#is_full_strace = args.ufstrace
 is_femonitor = False
 print_hexdump = args.phexdump
 is_ufemonitor = args.ufemonitor
@@ -57,7 +57,7 @@ if is_fileops == True:
     print_hexdump = False
     is_ufemonitor = False
 is_ver_memfor = args.ver_memfor
-is_lkm = args.lkm
+#is_lkm = args.lkm
 is_memfor = args.memfor
 
 
@@ -733,7 +733,7 @@ logs.write(f"Got the TCP conversation report dumped into the {net_activities}")
 #     iptables.delete_ip_port_redirect_entries()
 #     iptables.display_ip_port_redirect_entries()
 
-
+file_operations_dict = []
 if is_memfor or is_ver_memfor:
     if is_ver_memfor:
         analysis_dict["Memory Analysis"] = {}
@@ -1102,18 +1102,32 @@ if is_fileops:
     logs.write("starting file operations monitor..")
     logs.write("\n")
     scap_file = dynamic_analysis_report_dir + "/" + "sample_strace_out.txt"
-    fops = FileOperations(scap_file)
+    fops = FileOperations(scap_file, False)
     file_operations_dict = fops.jsonParser()
-    analysis_dict["File Operations"] = file_operations_dict
+    analysis_dict["File Operations"] = file_operations_dict[0]
     logs.write("file operations done..!!\n")
     print("file operations done..look in to json file....!!\n\n")
+    
+    
+if is_fileops:
+    print("Getting all syscall info...!!\n\n")
+    analysis_dict["System Calls"] = file_operations_dict[1]
+    print("/n/nGot syscall info..\n\n")
+else:
+    print("Getting all syscall info...!!\n\n")
+    scap_file = dynamic_analysis_report_dir + "/" + "sample_strace_out.txt"
+    fops = FileOperations(scap_file, True)
+    file_operations_dict = fops.jsonParser()
+    analysis_dict["System Calls"] = file_operations_dict[1]
+    print("Got Syscall info..\n\n")
     
     
 with open(json_report, "w") as file:
     json.dump(analysis_dict,file)
     
-logs.write("Done with total analysis..!!")
+logs.write("/nDone with total analysis..!!\n\n")
 logs.close()
+print("Done with total analysis..!!\n\n")
     
     
    
