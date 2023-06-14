@@ -135,13 +135,13 @@ class Static:
         try:
             response = requests.get(api_link,params=params, headers=headers)
             response.raise_for_status()
-            virustotal_analysis=response.json()
-            ana_dict=json.loads(visustotal_analysis)
-            if ana_dict['result']==0:
-                print("        No Previous Record For : ", self.md5_hash)
-            else:
-                analysis=ana_dict['report'][1]
-                return analysis
+            ana_dict=response.json()
+            return ana_dict
+#             if ana_dict['result']==0:
+#                 print("        No Previous Record For : ", self.md5_hash)
+#             else:
+#                 analysis=ana_dict['report'][1]
+#                 return analysis
         except requests.exceptions.HTTPError as errh:
             print ("Can NOT Fetch Results from VirusTotal-> Http Error:",errh)
         except requests.exceptions.ConnectionError as errc:

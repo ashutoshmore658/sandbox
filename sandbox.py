@@ -41,6 +41,7 @@ parser.add_argument("-E", "--ufemonitor", action="store_true", dest="ufemonitor"
 parser.add_argument("-m", "--memfor", action="store_true", dest="memfor", help="memory forensics in txt format", default=False)
 parser.add_argument("-M", "--vmemfor", action="store_true", dest="ver_memfor", help=" memory forensics in json format", default=False)
 parser.add_argument("-x", "--printhexdump", action="store_true", dest="phexdump", help="print hex dump in call trace (both filtered and unfiltered call trace)", default=False)
+parser.add_argument("-v", "--virustotal", action="store_true", dest="vtotal", help="get report from virustotal", default=False)
 
 args = parser.parse_args()
 print(args)
@@ -59,6 +60,7 @@ if is_fileops == True:
 is_ver_memfor = args.ver_memfor
 #is_lkm = args.lkm
 is_memfor = args.memfor
+is_virustotal = args.vtotal
 
 
 
@@ -741,25 +743,45 @@ if is_memfor or is_ver_memfor:
         logs.write("\n")
         print("starting memory analysis\n")
         mem = Memory(py_path, voltility_path, mem_dump_path, memory_profile_dir, is_ver_memfor)
+        print("getting banners..!!\n\n")
         analysis_dict["Memory Analysis"]["banners"] = mem.getBanners()
+        print("getting bash history..!!\n\n")
         analysis_dict["Memory Analysis"]["bash history"] = mem.getBashHistory()
+        print("getting credential structure sharing..!!\n\n")
         analysis_dict["Memory Analysis"]["credential structure sharing"] = mem.getCredentialStructureSharing()
+        print("getting altered IDT's..!!\n\n")
         analysis_dict["Memory Analysis"]["IDT altered"] = mem.getIdtAltered()
+        print("getting module lists..!!\n\n")
         analysis_dict["Memory Analysis"]["module lists"] = mem.getModuleList()
+        print("getting syscall table..!!\n\n")
         analysis_dict["Memory Analysis"]["syscall table"] = mem.getSyscallTable()
+        print("getting memory mapped ELF..!!\n\n")
         analysis_dict["Memory Analysis"]["memory mapped ELF"] = mem.getMemoryMappedElf()
+        print("getting process with environment variables..!!\n\n")
         analysis_dict["Memory Analysis"]["processes with envr's"] = mem.getProcessesWithEnvVars()
+        print("getting Keyboard Notifiers..!!\n\n")
         analysis_dict["Memory Analysis"]["keyboard notifiers"] = mem.getKeyboardNotifiers()
+        print("getting loaded kernel modules..!!\n\n")
         analysis_dict["Memory Analysis"]["loaded kernel modules"] = mem.getLoadedKernelModules()
+        print("getting memory maps of all processes..!!\n\n")
         analysis_dict["Memory Analysis"]["memory maps of all processes"] = mem.getMemoryMapsOfAllProcesses()
+        print("getting memory maps of processes")
         analysis_dict["Memory Analysis"]["memory maps of processes"] = mem.getMemoryMapsOfProcesses()
+        print("getting processes with potentially injected codes..!!\n\n")
         analysis_dict["Memory Analysis"]["processes with potentially injected codes"] = mem.getProcessesWithPotentiallyInjectedCode()
+        print("getting processes with mount spaces..!!\n\n")
         analysis_dict["Memory Analysis"]["processes with mount spaces"] = mem.getProcessesMountSpaces()
+        print("getting processes with their mother commands..!!\n\n")
         analysis_dict["Memory Analysis"]["processes with commands"] = mem.getProcessesWithCommands()
+        print("getting all processes..!!\n\n")
         analysis_dict["Memory Analysis"]["All processes"] = mem.getAllProcesses()
+        print("getting all process scans..!!\n\n")
         analysis_dict["Memory Analysis"]["Process Scans"] = mem.getProcessScans()
+        print("getting process tree..!!\n\n")
         analysis_dict["Memory Analysis"]["Process Tree"] = mem.getProcessTree()
+        print("getting network information of all processes..!!\n\n")
         analysis_dict["Memory Analysis"]["network info of all processes"] = mem.getNetworkInfoOfAllProcess()
+        print("getting TTY devices..!!\n\n")
         analysis_dict["Memory Analysis"]["TTY devices"] = mem.getTtyDevices()
     else:
         memory_analysis_report_dir = new_report_dir + "/" + "Memory Artifacts"
@@ -1112,7 +1134,7 @@ if is_fileops:
 if is_fileops:
     print("Getting all syscall info...!!\n\n")
     analysis_dict["System Calls"] = file_operations_dict[1]
-    print("/n/nGot syscall info..\n\n")
+    print("Got syscall info..\n\n")
 else:
     print("Getting all syscall info...!!\n\n")
     scap_file = dynamic_analysis_report_dir + "/" + "sample_strace_out.txt"
@@ -1121,11 +1143,24 @@ else:
     analysis_dict["System Calls"] = file_operations_dict[1]
     print("Got Syscall info..\n\n")
     
+
+if is_virustotal:
+    print("Sending file for VirusTotal Analysis..!!\n\n ")
+    vt_report = static.virusTotal(virustotal_key)
+    virustotal_dir = new_report_dir + "/" + "VirusTotal Report"
+    os.mkdir(virustotal_dir)
+    if os.path.isdir(virustotal_dir) and vt_report:
+        virustotal_json = virustotal_dir + "/" + f"{file_name} Report.json"
+        with open(virustotal_json, "w") as file:
+            json.dump(vt_report, file)
+        print(f"Fetched VirusTotal report..stored in {virustotal_json}\n\n")
+    else:
+        print("Exception occured while geting VirusTotal data..!!\n\n")
     
 with open(json_report, "w") as file:
     json.dump(analysis_dict,file)
     
-logs.write("/nDone with total analysis..!!\n\n")
+logs.write("Done with total analysis..!!\n\n")
 logs.close()
 print("Done with total analysis..!!\n\n")
     

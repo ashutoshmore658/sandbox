@@ -15,6 +15,7 @@ analysis_password="1234"
 analysis_clean_snapname="vm_fresh_1"
 analysis_mal_dir=r"/home/u/malware"
 is_elf_file=False
+virustotal_key = "49858c37eb67ff5a1d1f3785e7a9fc06462e097e3a3cfc8a5b2bf6e7d9fb60d4"
 
 
 # In[ ]:
